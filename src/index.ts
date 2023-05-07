@@ -1,21 +1,14 @@
+import { GraphQLFileLoader } from '@graphql-tools/graphql-file-loader';
+import { loadSchemaSync } from '@graphql-tools/load';
 import { ApolloServer } from '@apollo/server';
 import { startStandaloneServer } from '@apollo/server/standalone';
+import { addResolversToSchema } from '@graphql-tools/schema';
+import path, { join } from 'path';
+import { fileURLToPath } from 'url';
 
-// A schema is a collection of type definitions (hence "typeDefs")
-// that together define the "shape" of queries that are executed against your data.
-const typeDefs = `#graphql
-  type Book {
-    title: String
-    author: String
-  }
-
-  # The "Query" type is special: it lists all of the available queries that
-  # clients can execute, along with the return type for each. In this
-  # case, the "books" query returns an array of zero or more Books (defined above).
-  type Query {
-    books: [Book]
-  }
-`;
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const schema = loadSchemaSync(join(__dirname, '../schema.graphql'), { loaders: [new GraphQLFileLoader()] });
 
 const books = [
   {
@@ -35,15 +28,15 @@ const resolvers = {
   },
 };
 
-const server = new ApolloServer({
-  typeDefs, // 型
-  resolvers, // リゾルバ
-});
+// const server = new ApolloServer({
+//   typeDefs, // 型
+//   resolvers, // リゾルバ
+// });
+// schema.graphqlから生成した 型とリゾルバ
+const schemaWithResolvers = addResolversToSchema({ schema, resolvers });
 
-// Passing an ApolloServer instance to the `startStandaloneServer` function:
-//  1. creates an Express app
-//  2. installs your ApolloServer instance as middleware
-//  3. prepares your app to handle incoming requests
+const server = new ApolloServer({ schema: schemaWithResolvers });
+
 const { url } = await startStandaloneServer(server, {
   listen: { port: 4000 },
 });
