@@ -1,0 +1,37 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// enum
+enum TodoStatus {
+  done
+  pending
+}
+
+// model
+model Todo {
+  id          Int        @id @default(autoincrement())
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  title       String     @db.VarChar(255)
+  description String?
+  // enumを使用
+  status      TodoStatus @default(pending)
+  // リレーション (fields: [自分が持っている外部キー], references: [相手の外部キー])
+  user        User       @relation(fields: [userId], references: [id])
+  userId      String
+}
+
+model User {
+  id    String  @id @unique
+  name  String?
+  todos Todo[]
+}
